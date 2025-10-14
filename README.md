@@ -1,0 +1,1 @@
+# SearxNG Local for macOS
