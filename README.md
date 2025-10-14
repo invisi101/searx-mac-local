@@ -1,9 +1,22 @@
 # SearxNG Local for macOS
 
-A lightweight, self-contained local search engine running on your Mac.  
-Installs fully inside `~/Documents/searxng-mac`, with no background services or system modifications.
+A lightweight one-click installer for running your own **private SearxNG** instance on macOS — isolated in a virtual environment under your user folder, no root permissions or global changes.
 
-## Installation
+---
+
+## 🧩 Prerequisites
+
+- macOS 13 or later (Apple Silicon or Intel)
+- Homebrew installed (`brew --version` should work)
+
+If you don’t have Homebrew, run:
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+---
+
+## 🧰 Installation
 
 ```bash
 cd ~/Documents
@@ -12,30 +25,41 @@ cd searx-mac-local
 bash sx-deploy-mac.sh
 ```
 
-## Usage
+This will:
+- Install Python 3.12 via Homebrew if missing
+- Clone the latest SearxNG source code
+- Build it inside a self-contained Python virtual environment
+- Create easy `start-searxng` and `stop-searxng` commands in `~/.local/bin`
 
-Start:
+---
+
+## 🚀 Usage
+
+To start SearxNG:
 ```bash
-bash ~/Documents/searxng-mac/start-searx-mac.sh
+start-searxng
 ```
 
-Stop:
+Visit [http://127.0.0.1:8888](http://127.0.0.1:8888)
+
+To stop SearxNG:
 ```bash
-bash ~/Documents/searxng-mac/stop-searx-mac.sh
+stop-searxng
 ```
 
-Then open:
-```
-http://127.0.0.1:8888
-```
+---
 
-## Uninstall
+## 🧹 Uninstall
 
+To completely remove everything:
 ```bash
-bash ~/Documents/searx-mac-local/sx-uninstall-mac.sh
+rm -rf ~/Documents/searxng-mac ~/.local/bin/start-searxng ~/.local/bin/stop-searxng
 ```
 
-## Notes
+---
 
-- Runs entirely locally — no root or daemon needed.  
-- You can optionally make an Automator app later for GUI “Start/Stop” buttons.
+## ⚙️ Notes
+
+- Everything runs in your home directory — no sudo needed.
+- Python 3.12 is sandboxed under `/opt/homebrew/Cellar/python@3.12/`.
+- The app does **not** auto-start; you control when it runs.
