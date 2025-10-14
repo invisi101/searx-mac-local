@@ -1,6 +1,6 @@
 # SearxNG Local for macOS
 
-A lightweight one-click installer for running your own **private SearxNG** instance on macOS — isolated in a virtual environment under your user folder, no root permissions or global changes.
+An installer for running your own **private SearxNG** instance on macOS — isolated in a virtual environment under your user folder, no root permissions or global changes.  Started and stopped by a terminal command.
 
 ---
 
@@ -55,7 +55,7 @@ To completely remove everything:
 ```bash
 rm -rf ~/Documents/searxng-mac ~/.local/bin/start-searxng ~/.local/bin/stop-searxng
 ```
-
+Only the cloned git repo folder will remain, in case you decide you want to reinstall.  Or just delete it manually.
 ---
 
 ## ⚙️ Notes
