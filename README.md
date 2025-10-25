@@ -63,3 +63,59 @@ Only the cloned git repo folder will remain, in case you decide you want to rein
 - Everything runs in your home directory — no sudo needed.
 - Python 3.12 is sandboxed under `/opt/homebrew/Cellar/python@3.12/`.
 - The app does **not** auto-start; you control when it runs.
+
+---
+
+## ⚠️ PLEASE NOTE — Command Not Found Fix
+
+If you see an error like, "zsh: command not found: start-searxng" or "bash: start-searxng: command not found"
+then the scripts were installed correctly, but your shell cannot find them because the directory `~/.local/bin` is not in your PATH.  Here’s how to fix it depending on your setup
+
+---
+### 🧩 For **zsh** (default shell on macOS 10.15+)
+1. Add the local bin directory to your PATH:
+   ```bash
+   echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zprofile
+   ```
+2. Apply the change:
+   ```bash
+   source ~/.zprofile
+   ```
+3. Verify:
+   ```bash
+   which start-searxng
+   ```
+   You should see:
+   ```
+   /Users/yourname/.local/bin/start-searxng
+   ```
+
+> 💡 You can also add the same line to `~/.zshrc` if you want it available in non-login shells (e.g., iTerm or VS Code terminals).
+
+---
+
+### 🧩 For **bash**
+1. Add this line:
+   ```bash
+   echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bash_profile
+   ```
+2. Reload your profile:
+   ```bash
+   source ~/.bash_profile
+   ```
+3. Test the command again:
+   ```bash
+   start-searxng
+   ```
+---
+
+### 🧩 Verify installation
+Check that both helper scripts exist:
+```bash
+ls ~/.local/bin/start-searxng ~/.local/bin/stop-searxng
+```
+If they’re missing, re-run the installer:
+```bash
+bash sx-deploy-mac.sh
+```
+------
