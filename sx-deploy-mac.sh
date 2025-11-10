@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# sx-deploy-mac.sh — macOS installer for SearxNG Local
+# sx-deploy-mac.sh — macOS installer for SearxNG Local (stable version)
 set -euo pipefail
 
 APP_NAME="SearxNG"
@@ -9,22 +9,21 @@ VENV_DIR="$INSTALL_DIR/venv"
 PY_APP="$REPO_DIR/searx/webapp.py"
 CONFIG="$INSTALL_DIR/settings.yml"
 USER_BIN="$HOME/.local/bin"
-CLI_BIN="$USER_BIN/searxng"
 
 echo "🧩 Installing SearxNG (macOS local version)"
 echo "---------------------------------------------"
 
-# Check and install Homebrew
+# Ensure Homebrew exists
 if ! command -v brew >/dev/null 2>&1; then
   echo "[*] Homebrew not found. Installing..."
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
-# Install prerequisites
+# Prerequisites
 echo "[*] Checking prerequisites with brew..."
 brew install -q git python@3.12 || true
 
-# Use Python 3.12 if available
+# Select Python
 if command -v python3.12 >/dev/null 2>&1; then
   PYTHON_BIN="python3.12"
 else
@@ -33,15 +32,15 @@ fi
 
 echo "Using Python: $(which $PYTHON_BIN)"
 
-# Ensure install directory exists
+# Make install directory
 mkdir -p "$INSTALL_DIR"
 
-# Clone or update SearxNG
+# Clone SearxNG
 if [ ! -d "$REPO_DIR/.git" ]; then
   echo "📥 Cloning SearxNG repository..."
   git clone https://github.com/searxng/searxng "$REPO_DIR"
 else
-  echo "📦 Updating existing SearxNG repository..."
+  echo "📦 Updating SearxNG repository..."
   (cd "$REPO_DIR" && git pull)
 fi
 
@@ -50,27 +49,30 @@ if [ ! -d "$VENV_DIR" ]; then
   echo "🐍 Creating Python virtual environment..."
   $PYTHON_BIN -m venv "$VENV_DIR"
 fi
+
 source "$VENV_DIR/bin/activate"
 
-echo "📦 Installing dependencies..."
+echo "📦 Installing dependencies (requirements.txt method)"
 pip install -U pip setuptools wheel
 
-# ✅ CRITICAL FIX: bypass metadata build (avoids msgspec import crash)
-(
-  cd "$REPO_DIR" &&
-  pip install --no-build-isolation --no-use-pep517 .
-)
+# ✅ Install dependencies ONLY (NO pip install .)
+if [ -f "$REPO_DIR/searx/requirements.txt" ]; then
+  pip install -r "$REPO_DIR/searx/requirements.txt"
+else
+  echo "❌ ERROR: requirements.txt missing — installation cannot continue."
+  exit 1
+fi
 
 deactivate
 
 echo "⚙️ Configuring SearxNG..."
 cp "$REPO_DIR/searx/settings.yml" "$CONFIG"
 
-# Generate a proper secret key
+# Replace secret_key safely
 SECRET=$(openssl rand -hex 32)
 sed -i '' "s/secret_key: .*/secret_key: \"$SECRET\"/" "$CONFIG"
 
-# Add silent logging section
+# Add silent logging
 cat >>"$CONFIG" <<'YAML'
 logging:
   version: 1
@@ -90,7 +92,7 @@ mkdir -p "$USER_BIN"
 
 # START SCRIPT
 cat >"$USER_BIN/start-searxng" <<EOF
-#!/usr/binenv bash
+#!/usr/bin/env bash
 source "$VENV_DIR/bin/activate"
 export SEARXNG_SETTINGS_PATH="$CONFIG"
 nohup python3 "$PY_APP" >/dev/null 2>&1 &
@@ -111,11 +113,11 @@ fi
 EOF
 chmod +x "$USER_BIN/stop-searxng"
 
-# Ensure ~/.local/bin is in PATH
+# PATH fix
 if ! echo "$PATH" | grep -q "$HOME/.local/bin"; then
   echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zprofile
   echo "✅ Added ~/.local/bin to PATH in ~/.zprofile"
 fi
 
 echo "✅ Installation complete."
-echo "Run 'start-searxng' to launch, or 'stop-searxng' to stop."
+echo "Run 'start-searxng' to launch SearxNG, or 'stop-searxng' to stop it."
