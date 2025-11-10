@@ -54,7 +54,7 @@ source "$VENV_DIR/bin/activate"
 
 echo "📦 Installing dependencies..."
 pip install -U pip setuptools wheel
-(cd "$REPO_DIR" && pip install --use-pep517 --no-build-isolation -e .)
+(cd "$REPO_DIR" && pip install .)
 deactivate
 
 echo "⚙️ Configuring SearxNG..."
