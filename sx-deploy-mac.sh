@@ -33,6 +33,7 @@ fi
 
 echo "Using Python: $(which $PYTHON_BIN)"
 
+# Ensure install directory exists
 mkdir -p "$INSTALL_DIR"
 
 # Clone or update SearxNG
@@ -52,14 +53,18 @@ fi
 source "$VENV_DIR/bin/activate"
 
 echo "📦 Installing dependencies..."
-pip install -U pip setuptools wheel pyyaml msgspec redis httpx uvloop
+pip install -U pip setuptools wheel
 (cd "$REPO_DIR" && pip install --use-pep517 --no-build-isolation -e .)
 deactivate
 
 echo "⚙️ Configuring SearxNG..."
 cp "$REPO_DIR/searx/settings.yml" "$CONFIG"
+
+# Generate a proper secret key
 SECRET=$(openssl rand -hex 32)
-sed -i '' "s/secret_key:.*/secret_key: \"$SECRET\"/" "$CONFIG"
+sed -i '' "s/secret_key: .*/secret_key: \"$SECRET\"/" "$CONFIG"
+
+# Add silent logging section
 cat >>"$CONFIG" <<'YAML'
 logging:
   version: 1
@@ -77,16 +82,18 @@ YAML
 echo "🚀 Creating start/stop scripts..."
 mkdir -p "$USER_BIN"
 
+# START SCRIPT
 cat >"$USER_BIN/start-searxng" <<EOF
 #!/usr/bin/env bash
 source "$VENV_DIR/bin/activate"
 export SEARXNG_SETTINGS_PATH="$CONFIG"
-nohup python "$PY_APP" >/dev/null 2>&1 &
+nohup python3 "$PY_APP" >/dev/null 2>&1 &
 disown
 echo "SearxNG started at http://127.0.0.1:8888"
 EOF
 chmod +x "$USER_BIN/start-searxng"
 
+# STOP SCRIPT
 cat >"$USER_BIN/stop-searxng" <<'EOF'
 #!/usr/bin/env bash
 if pgrep -f "searx/webapp.py" >/dev/null; then
@@ -97,6 +104,12 @@ else
 fi
 EOF
 chmod +x "$USER_BIN/stop-searxng"
+
+# Ensure ~/.local/bin is in PATH
+if ! echo "$PATH" | grep -q "$HOME/.local/bin"; then
+  echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zprofile
+  echo "✅ Added ~/.local/bin to PATH in ~/.zprofile"
+fi
 
 echo "✅ Installation complete."
 echo "Run 'start-searxng' to launch, or 'stop-searxng' to stop."
