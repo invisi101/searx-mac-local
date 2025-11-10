@@ -1,78 +1,70 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
-APP_DIR="$HOME/Documents/searxng-mac"
-REPO_DIR="$APP_DIR/searxng"
-VENV_DIR="$APP_DIR/venv"
-CONFIG="$APP_DIR/settings.yml"
-BIN_DIR="$HOME/.local/bin"
+set -e
 
 echo "🧩 Installing SearxNG (macOS local)"
 echo "-----------------------------------"
 
-if ! command -v brew >/dev/null 2>&1; then
-  echo "Homebrew is not installed. Install it first at https://brew.sh"
-  exit 1
-fi
+# Base paths
+BASE_DIR="$HOME/Documents/searxng-mac"
+SEARX_DIR="$BASE_DIR/searxng"
+VENV_DIR="$BASE_DIR/venv"
 
+# Make sure directories are fresh
+rm -rf "$BASE_DIR"
+mkdir -p "$BASE_DIR"
+
+echo "✅ Checking dependencies"
 brew install python@3.12 git || true
 
 PYTHON="/opt/homebrew/opt/python@3.12/bin/python3.12"
 echo "Using Python: $PYTHON"
 
-mkdir -p "$APP_DIR"
-
 echo "📥 Cloning SearxNG..."
-rm -rf "$REPO_DIR"
-git clone https://github.com/searxng/searxng "$REPO_DIR"
+git clone --depth 1 https://github.com/searxng/searxng.git "$SEARX_DIR"
 
-echo "🐍 Creating virtual environment..."
-rm -rf "$VENV_DIR"
+echo "🐍 Creating virtual env..."
 $PYTHON -m venv "$VENV_DIR"
 
+echo "📦 Installing required Python packages..."
 source "$VENV_DIR/bin/activate"
 
-echo "📦 Installing Python dependencies..."
 pip install -U pip setuptools wheel
-pip install whitenoise flask-babel markdown-it-py httpx-socks valkey typer msgspec redis httpx uvloop
 
-echo "⚙️ Creating settings.yml..."
+# Install all SearxNG dependencies BEFORE installing SearxNG itself
+pip install \
+ msgspec \
+ whitenoise \
+ flask-babel \
+ markdown-it-py \
+ httpx-socks \
+ valkey \
+ typer
+
+echo "✅ Installing SearxNG (editable mode)..."
+pip install -e "$SEARX_DIR"
+
+echo "🔐 Generating secret key..."
 SECRET=$(openssl rand -hex 32)
 
-cat > "$CONFIG" <<EOF
-use_default_settings: false
+SETTINGS="$BASE_DIR/settings.yml"
 
+echo "✅ Creating settings.yml"
+
+cat > "$SETTINGS" <<EOF
 server:
   port: 8888
   bind_address: "127.0.0.1"
-  base_url: "http://127.0.0.1:8888/"
   secret_key: "$SECRET"
 
 ui:
-  static_use_hash: true
-  debug: false
+  static_path: "$SEARX_DIR/searx/static"
+  template_path: "$SEARX_DIR/searx/templates"
 EOF
-
-mkdir -p "$BIN_DIR"
-
-cat > "$BIN_DIR/start-searxng" <<EOF
-#!/usr/bin/env bash
-source "$VENV_DIR/bin/activate"
-export PYTHONPATH="$REPO_DIR"
-export SEARXNG_SETTINGS_PATH="$CONFIG"
-nohup python "$REPO_DIR/searx/webapp.py" >/dev/null 2>&1 &
-echo "SearxNG started at http://127.0.0.1:8888"
-EOF
-
-chmod +x "$BIN_DIR/start-searxng"
-
-cat > "$BIN_DIR/stop-searxng" <<EOF
-#!/usr/bin/env bash
-pkill -f "searx/webapp.py" && echo "SearxNG stopped."
-EOF
-
-chmod +x "$BIN_DIR/stop-searxng"
 
 echo "✅ Installation complete!"
-echo "Run: start-searxng"
-echo "Run: stop-searxng"
+echo "To start SearxNG:"
+echo ""
+echo "  source $VENV_DIR/bin/activate"
+echo "  python -m searx.webapp --settings $SETTINGS"
+echo ""
