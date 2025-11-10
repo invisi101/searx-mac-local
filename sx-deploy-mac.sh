@@ -58,8 +58,8 @@ deactivate
 
 echo "⚙️ Configuring SearxNG..."
 cp "$REPO_DIR/searx/settings.yml" "$CONFIG"
-sed -i '' "s|ultrasecretkey|$(openssl rand -hex 32)|" "$CONFIG"
-
+SECRET=$(openssl rand -hex 32)
+sed -i '' "s/secret_key:.*/secret_key: \"$SECRET\"/" "$CONFIG"
 cat >>"$CONFIG" <<'YAML'
 logging:
   version: 1
