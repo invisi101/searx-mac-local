@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# sx-deploy-mac.sh — macOS SearxNG local installer (stable uv version)
+# sx-deploy-mac.sh — macOS installer for SearxNG Local (stable, no-package-build)
 set -euo pipefail
 
 APP_NAME="SearxNG"
@@ -13,54 +13,88 @@ USER_BIN="$HOME/.local/bin"
 echo "🧩 Installing SearxNG (macOS local version)"
 echo "---------------------------------------------"
 
-# Install Homebrew if needed
+# 0) Homebrew
 if ! command -v brew >/dev/null 2>&1; then
   echo "[*] Installing Homebrew..."
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
-echo "[*] Checking dependencies..."
-brew install -q git python@3.12 uv || true
+# 1) Prereqs
+echo "[*] Checking prerequisites with brew..."
+brew install -q git python@3.12 || true
 
-# Choose Python
+# 2) Python pick
 if command -v python3.12 >/dev/null 2>&1; then
   PYTHON_BIN="python3.12"
 else
   PYTHON_BIN="python3"
 fi
-echo "Using Python: $(which $PYTHON_BIN)"
+echo "Using Python: $(which "$PYTHON_BIN")"
 
+# 3) Layout
 mkdir -p "$INSTALL_DIR"
 
-# Clone SearxNG repo
+# 4) Clone or update SearxNG
 if [ ! -d "$REPO_DIR/.git" ]; then
   echo "📥 Cloning SearxNG repository..."
   git clone https://github.com/searxng/searxng "$REPO_DIR"
 else
-  echo "📦 Updating existing SearxNG repository..."
-  (cd "$REPO_DIR" && git pull)
+  echo "📦 Updating SearxNG repository..."
+  (cd "$REPO_DIR" && git pull --ff-only)
 fi
 
-# Create venv using uv (fast, safe, future-proof)
-echo "🐍 Creating virtual environment using uv..."
-uv venv "$VENV_DIR"
+# 5) venv
+if [ ! -d "$VENV_DIR" ]; then
+  echo "🐍 Creating Python virtual environment..."
+  "$PYTHON_BIN" -m venv "$VENV_DIR"
+fi
 
 source "$VENV_DIR/bin/activate"
 
-echo "📦 Installing SearxNG dependencies via uv..."
-cd "$REPO_DIR"
-uv pip install .
+# 6) Python deps — HARD-CODED LIST (no builds triggered)
+echo "📦 Installing Python dependencies..."
+pip install -U pip setuptools wheel
+
+pip install \
+  flask \
+  jinja2 \
+  babel \
+  python-dateutil \
+  pyyaml \
+  httpx \
+  certifi \
+  idna \
+  chardet \
+  sniffio \
+  beautifulsoup4 \
+  lxml \
+  markdown \
+  python-dotenv \
+  pygments \
+  langdetect \
+  python-multipart \
+  msgspec \
+  uvloop \
+  h2 \
+  hpack \
+  hyperframe \
+  brotli \
+  redis
 
 deactivate
 
+# 7) Configure settings.yml
 echo "⚙️ Configuring SearxNG..."
-cp "$REPO_DIR/searx/settings.yml" "$CONFIG"
+cp "$REPO_DIR/searx/settings.yml" "$CONFIG" 2>/dev/null || {
+  echo "❌ ERROR: Could not find settings.yml in SearxNG repo."
+  exit 1
+}
 
-# Insert random secret key
-SECRET=$(openssl rand -hex 32)
+SECRET="$(openssl rand -hex 32)"
 sed -i '' "s/secret_key: .*/secret_key: \"$SECRET\"/" "$CONFIG"
 
-cat >> "$CONFIG" <<'YAML'
+# Quiet logging
+cat >>"$CONFIG" <<'YAML'
 logging:
   version: 1
   disable_existing_loggers: true
@@ -74,11 +108,10 @@ logging:
       propagate: false
 YAML
 
-# Create start/stop scripts
+# 8) Start/Stop scripts
 echo "🚀 Creating start/stop scripts..."
 mkdir -p "$USER_BIN"
 
-# START script
 cat >"$USER_BIN/start-searxng" <<EOF
 #!/usr/bin/env bash
 source "$VENV_DIR/bin/activate"
@@ -89,7 +122,6 @@ echo "✅ SearxNG running at http://127.0.0.1:8888"
 EOF
 chmod +x "$USER_BIN/start-searxng"
 
-# STOP script
 cat >"$USER_BIN/stop-searxng" <<'EOF'
 #!/usr/bin/env bash
 if pgrep -f "searx/webapp.py" >/dev/null; then
@@ -101,12 +133,12 @@ fi
 EOF
 chmod +x "$USER_BIN/stop-searxng"
 
-# PATH fix
+# 9) PATH fix
 if ! echo "$PATH" | grep -q "$HOME/.local/bin"; then
   echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zprofile
-  echo "✅ Added ~/.local/bin to PATH (restart terminal)"
+  echo "✅ Added ~/.local/bin to PATH (you may need to restart terminal)"
 fi
 
 echo "✅ Installation complete!"
-echo "Run: start-searxng"
-echo "Stop: stop-searxng"
+echo "➡️ Run: start-searxng"
+echo "➡️ Stop: stop-searxng"
