@@ -20,7 +20,7 @@ if ! command -v brew >/dev/null 2>&1; then
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
-# Install dependencies
+# Install prerequisites
 echo "[*] Checking prerequisites with brew..."
 brew install -q git python@3.12 || true
 
@@ -54,7 +54,13 @@ source "$VENV_DIR/bin/activate"
 
 echo "📦 Installing dependencies..."
 pip install -U pip setuptools wheel
-(cd "$REPO_DIR" && pip install .)
+
+# ✅ CRITICAL FIX: bypass metadata build (avoids msgspec import crash)
+(
+  cd "$REPO_DIR" &&
+  pip install --no-build-isolation --no-use-pep517 .
+)
+
 deactivate
 
 echo "⚙️ Configuring SearxNG..."
@@ -84,7 +90,7 @@ mkdir -p "$USER_BIN"
 
 # START SCRIPT
 cat >"$USER_BIN/start-searxng" <<EOF
-#!/usr/bin/env bash
+#!/usr/binenv bash
 source "$VENV_DIR/bin/activate"
 export SEARXNG_SETTINGS_PATH="$CONFIG"
 nohup python3 "$PY_APP" >/dev/null 2>&1 &
