@@ -5,12 +5,11 @@ set -e
 echo "🧩 Installing SearxNG (macOS local)"
 echo "-----------------------------------"
 
-# Base paths
 BASE_DIR="$HOME/Documents/searxng-mac"
-SEARX_DIR="$BASE_DIR/searxng"
+SEARX_SRC="$BASE_DIR/searxng"
 VENV_DIR="$BASE_DIR/venv"
+SETTINGS="$BASE_DIR/settings.yml"
 
-# Make sure directories are fresh
 rm -rf "$BASE_DIR"
 mkdir -p "$BASE_DIR"
 
@@ -21,17 +20,17 @@ PYTHON="/opt/homebrew/opt/python@3.12/bin/python3.12"
 echo "Using Python: $PYTHON"
 
 echo "📥 Cloning SearxNG..."
-git clone --depth 1 https://github.com/searxng/searxng.git "$SEARX_DIR"
+git clone --depth 1 https://github.com/searxng/searxng.git "$SEARX_SRC"
 
-echo "🐍 Creating virtual env..."
+echo "🐍 Creating virtual environment..."
 $PYTHON -m venv "$VENV_DIR"
 
-echo "📦 Installing required Python packages..."
 source "$VENV_DIR/bin/activate"
 
-pip install -U pip setuptools wheel
+echo "📦 Updating pip..."
+pip install -U pip wheel setuptools
 
-# Install all SearxNG dependencies BEFORE installing SearxNG itself
+echo "📦 Installing SearxNG dependencies..."
 pip install \
  msgspec \
  whitenoise \
@@ -41,16 +40,13 @@ pip install \
  valkey \
  typer
 
-echo "✅ Installing SearxNG (editable mode)..."
-pip install -e "$SEARX_DIR"
+echo "📦 Installing SearxNG (regular mode, NOT editable)..."
+pip install "$SEARX_SRC"
 
 echo "🔐 Generating secret key..."
 SECRET=$(openssl rand -hex 32)
 
-SETTINGS="$BASE_DIR/settings.yml"
-
-echo "✅ Creating settings.yml"
-
+echo "✅ Writing settings.yml"
 cat > "$SETTINGS" <<EOF
 server:
   port: 8888
@@ -58,13 +54,13 @@ server:
   secret_key: "$SECRET"
 
 ui:
-  static_path: "$SEARX_DIR/searx/static"
-  template_path: "$SEARX_DIR/searx/templates"
+  static_path: "$SEARX_SRC/searx/static"
+  template_path: "$SEARX_SRC/searx/templates"
 EOF
 
-echo "✅ Installation complete!"
-echo "To start SearxNG:"
+echo "✅ All done!"
 echo ""
+echo "To start SearxNG:"
 echo "  source $VENV_DIR/bin/activate"
 echo "  python -m searx.webapp --settings $SETTINGS"
 echo ""
