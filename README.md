@@ -1,5 +1,12 @@
 # SearxNG Local for macOS
 
+SORRY.  THIS WAS WORKING PERFECTLY FOR A MONTH OR SO, ok no more caps, but some changes were made on the SearxNG side and the script no longer works.
+Anyone is welcome to take what's here and try to get it working.  
+It was really useful for setting SearxNG up on friends' computers and I do plan to try to make a new working version at some point, but not sure when I'll have time. 
+Anyway, for what it's worth......
+
+-------
+
 An installer for running your own **private SearxNG** instance on macOS — isolated in a virtual environment under your user folder, no root permissions or global changes.  Started and stopped by a terminal command.
 
 ---
