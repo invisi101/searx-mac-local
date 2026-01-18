@@ -6,13 +6,10 @@ APP_NAME="SearxNG"
 INSTALL_DIR="$HOME/Documents/searxng-mac"
 REPO_DIR="$INSTALL_DIR/searxng"
 VENV_DIR="$INSTALL_DIR/venv"
-PY_APP="$REPO_DIR/searx/webapp.py"
 CONFIG="$INSTALL_DIR/settings.yml"
-USER_BIN="$HOME/.local/bin"
-CLI_BIN="$USER_BIN/searxng"
 
-echo "🧩 Installing SearxNG (macOS local version)"
-echo "---------------------------------------------"
+echo "$APP_NAME Local Installer (macOS)"
+echo "-----------------------------------"
 
 # Check and install Homebrew
 if ! command -v brew >/dev/null 2>&1; then
@@ -20,47 +17,44 @@ if ! command -v brew >/dev/null 2>&1; then
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
-# Install dependencies
-echo "[*] Checking prerequisites with brew..."
-brew install -q git python@3.12 || true
+echo "[*] Installing prerequisites..."
+brew install -q git python@3.11 libxml2 libxslt openssl@3 libffi pybind11 || true
 
-# Use Python 3.12 if available
-if command -v python3.12 >/dev/null 2>&1; then
-  PYTHON_BIN="python3.12"
-else
-  PYTHON_BIN="python3"
-fi
+PYTHON_BIN="$(brew --prefix python@3.11)/bin/python3.11"
 
-echo "Using Python: $(which $PYTHON_BIN)"
+# Set build flags so pip can find Homebrew libraries when compiling packages like lxml
+export LDFLAGS="-L$(brew --prefix libxml2)/lib -L$(brew --prefix libxslt)/lib -L$(brew --prefix openssl@3)/lib -L$(brew --prefix libffi)/lib"
+export CPPFLAGS="-I$(brew --prefix libxml2)/include -I$(brew --prefix libxslt)/include -I$(brew --prefix openssl@3)/include -I$(brew --prefix libffi)/include"
+
+echo "[*] Using Python: $PYTHON_BIN"
 
 mkdir -p "$INSTALL_DIR"
 
 # Clone or update SearxNG
 if [ ! -d "$REPO_DIR/.git" ]; then
-  echo "📥 Cloning SearxNG repository..."
-  git clone https://github.com/searxng/searxng "$REPO_DIR"
+  echo "[*] Cloning SearxNG repository..."
+  git clone --depth 1 https://github.com/searxng/searxng.git "$REPO_DIR"
 else
-  echo "📦 Updating existing SearxNG repository..."
+  echo "[*] Updating existing SearxNG repository..."
   (cd "$REPO_DIR" && git pull)
 fi
 
 # Create venv
-if [ ! -d "$VENV_DIR" ]; then
-  echo "🐍 Creating Python virtual environment..."
-  $PYTHON_BIN -m venv "$VENV_DIR"
-fi
-source "$VENV_DIR/bin/activate"
+echo "[*] Creating Python virtual environment..."
+"$PYTHON_BIN" -m venv "$VENV_DIR"
 
-echo "📦 Installing dependencies..."
-pip install -U pip setuptools wheel pyyaml msgspec redis httpx uvloop
-(cd "$REPO_DIR" && pip install --use-pep517 --no-build-isolation -e .)
-deactivate
+echo "[*] Installing Python dependencies..."
+"$VENV_DIR/bin/pip" install --upgrade pip setuptools wheel pybind11
+"$VENV_DIR/bin/pip" install lxml babel flask-babel pyyaml msgspec httpx uvloop
+"$VENV_DIR/bin/pip" install --use-pep517 --no-build-isolation -e "$REPO_DIR"
 
-echo "⚙️ Configuring SearxNG..."
-cp "$REPO_DIR/searx/settings.yml" "$CONFIG"
-sed -i '' "s|ultrasecretkey|$(openssl rand -hex 32)|" "$CONFIG"
+# Configure settings
+echo "[*] Configuring SearxNG..."
+cp "$REPO_DIR/utils/templates/etc/searxng/settings.yml" "$CONFIG"
+sed -i '' "s|secret_key:.*|secret_key: \"$(openssl rand -hex 16)\"|" "$CONFIG"
 
 cat >>"$CONFIG" <<'YAML'
+
 logging:
   version: 1
   disable_existing_loggers: true
@@ -74,29 +68,19 @@ logging:
       propagate: false
 YAML
 
-echo "🚀 Creating start/stop scripts..."
-mkdir -p "$USER_BIN"
+# Copy start/stop scripts to install directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cp "$SCRIPT_DIR/start-searx-mac.sh" "$INSTALL_DIR/"
+cp "$SCRIPT_DIR/stop-searx-mac.sh" "$INSTALL_DIR/"
+chmod +x "$INSTALL_DIR/start-searx-mac.sh" "$INSTALL_DIR/stop-searx-mac.sh"
 
-cat >"$USER_BIN/start-searxng" <<EOF
-#!/usr/bin/env bash
-source "$VENV_DIR/bin/activate"
-export SEARXNG_SETTINGS_PATH="$CONFIG"
-nohup python "$PY_APP" >/dev/null 2>&1 &
-disown
-echo "SearxNG started at http://127.0.0.1:8888"
-EOF
-chmod +x "$USER_BIN/start-searxng"
-
-cat >"$USER_BIN/stop-searxng" <<'EOF'
-#!/usr/bin/env bash
-if pgrep -f "searx/webapp.py" >/dev/null; then
-  pkill -f "searx/webapp.py"
-  echo "SearxNG stopped."
-else
-  echo "SearxNG is not running."
-fi
-EOF
-chmod +x "$USER_BIN/stop-searxng"
-
-echo "✅ Installation complete."
-echo "Run 'start-searxng' to launch, or 'stop-searxng' to stop."
+echo
+echo "-----------------------------------"
+echo "$APP_NAME installed successfully."
+echo
+echo "Location: $INSTALL_DIR"
+echo "Access:   http://127.0.0.1:8888"
+echo
+echo "To start: $INSTALL_DIR/start-searx-mac.sh"
+echo "To stop:  $INSTALL_DIR/stop-searx-mac.sh"
+echo "-----------------------------------"

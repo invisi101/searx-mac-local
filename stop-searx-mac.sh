@@ -3,7 +3,7 @@
 
 if pgrep -f "searx/webapp.py" >/dev/null; then
   pkill -f "searx/webapp.py"
-  echo "🛑 SearxNG stopped."
+  echo "SearxNG stopped."
 else
-  echo "ℹ️  No running SearxNG instance found."
+  echo "SearxNG is not running."
 fi

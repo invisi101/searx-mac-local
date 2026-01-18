@@ -1,22 +1,22 @@
 # SearxNG Local for macOS
 
-An installer for running your own **private SearxNG** instance on macOS — isolated in a virtual environment under your user folder, no root permissions or global changes.  Started and stopped by a terminal command.
+An installer for running your own **private SearxNG** instance on macOS — isolated in a virtual environment under your user folder, no root permissions or global changes.
 
 ---
 
-## 🧩 Prerequisites
+## Prerequisites
 
 - macOS 13 or later (Apple Silicon or Intel)
 - Homebrew installed (`brew --version` should work)
 
-If you don’t have Homebrew, run:
+If you don't have Homebrew, run:
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
 ---
 
-## 🧰 Installation
+## Installation
 
 ```bash
 cd ~/Documents
@@ -26,40 +26,40 @@ bash sx-deploy-mac.sh
 ```
 
 This will:
-- Install Python 3.12 via Homebrew if missing
+- Install Python 3.11 and build dependencies via Homebrew
 - Clone the latest SearxNG source code
 - Build it inside a self-contained Python virtual environment
-- Create easy `start-searxng` and `stop-searxng` commands in `~/.local/bin`
+- Configure settings with a random secret key
 
 ---
 
-## 🚀 Usage
+## Usage
 
 To start SearxNG:
 ```bash
-start-searxng
+~/Documents/searxng-mac/start-searx-mac.sh
 ```
 
 Visit [http://127.0.0.1:8888](http://127.0.0.1:8888)
 
 To stop SearxNG:
 ```bash
-stop-searxng
+~/Documents/searxng-mac/stop-searx-mac.sh
 ```
 
 ---
 
-## 🧹 Uninstall
+## Uninstall
 
 To completely remove everything:
 ```bash
-rm -rf ~/Documents/searxng-mac ~/.local/bin/start-searxng ~/.local/bin/stop-searxng
+bash sx-uninstall-mac.sh
 ```
-Only the cloned git repo folder will remain, in case you decide you want to reinstall.  Or just delete it manually.
+
 ---
 
-## ⚙️ Notes
+## Notes
 
 - Everything runs in your home directory — no sudo needed.
-- Python 3.12 is sandboxed under `/opt/homebrew/Cellar/python@3.12/`.
+- SearxNG is installed to `~/Documents/searxng-mac`.
 - The app does **not** auto-start; you control when it runs.
