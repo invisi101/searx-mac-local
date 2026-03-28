@@ -19,7 +19,6 @@ If you don't have Homebrew, run:
 ## Installation
 
 ```bash
-cd ~/Documents
 git clone https://github.com/invisi101/searx-mac-local.git
 cd searx-mac-local
 bash sx-deploy-mac.sh
@@ -49,9 +48,23 @@ To stop SearxNG:
 
 ---
 
+## Auto-Start on Login
+
+To have SearxNG start automatically when you log in:
+```bash
+bash setup-autostart.sh
+```
+
+To disable auto-start later:
+```bash
+launchctl unload ~/Library/LaunchAgents/com.searxng.local.plist
+```
+
+---
+
 ## Uninstall
 
-To completely remove everything:
+To completely remove everything (including auto-start):
 ```bash
 bash sx-uninstall-mac.sh
 ```
@@ -62,4 +75,4 @@ bash sx-uninstall-mac.sh
 
 - Everything runs in your home directory — no sudo needed.
 - SearxNG is installed to `~/Documents/searxng-mac`.
-- The app does **not** auto-start; you control when it runs.
+- You can clone this repo anywhere — only the deploy script matters.

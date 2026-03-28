@@ -4,8 +4,16 @@
 set -e
 
 INSTALL_DIR="$HOME/Documents/searxng-mac"
+PLIST_FILE="$HOME/Library/LaunchAgents/com.searxng.local.plist"
 
 echo "Uninstalling SearxNG..."
+
+# Unload and remove LaunchAgent
+if [ -f "$PLIST_FILE" ]; then
+  echo "Removing auto-start..."
+  launchctl unload "$PLIST_FILE" 2>/dev/null || true
+  rm -f "$PLIST_FILE"
+fi
 
 # Stop running instance
 if pgrep -f "searx/webapp.py" >/dev/null; then
