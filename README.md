@@ -6,7 +6,7 @@ An installer for running your own **private SearxNG** instance on macOS — isol
 
 ## Prerequisites
 
-- macOS 13 or later, including macOS 26 (Apple Silicon or Intel)
+- macOS 13 or later, including macOS 26+ (Apple Silicon or Intel)
 - Homebrew installed (`brew --version` should work)
 
 If you don't have Homebrew, run:
