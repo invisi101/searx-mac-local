@@ -6,7 +6,7 @@ An installer for running your own **private SearxNG** instance on macOS — isol
 
 ## Prerequisites
 
-- macOS 13 or later (Apple Silicon or Intel)
+- macOS 13 or later (Apple Silicon or Intel), including macOS 26
 - Homebrew installed (`brew --version` should work)
 
 If you don't have Homebrew, run:
@@ -75,4 +75,5 @@ bash sx-uninstall-mac.sh
 
 - Everything runs in your home directory — no sudo needed.
 - SearxNG is installed to `~/Documents/searxng-mac`.
+- Auto-start logs are written to `~/Library/Logs/searxng.log` and `~/Library/Logs/searxng.error.log`.
 - You can clone this repo anywhere — only the deploy script matters.

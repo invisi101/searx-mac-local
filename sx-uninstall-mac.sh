@@ -28,4 +28,7 @@ if [ -d "$INSTALL_DIR" ]; then
   rm -rf "$INSTALL_DIR"
 fi
 
+# Remove log files from Library/Logs
+rm -f "$HOME/Library/Logs/searxng.log" "$HOME/Library/Logs/searxng.error.log"
+
 echo "SearxNG has been removed."

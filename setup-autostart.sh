@@ -27,8 +27,9 @@ cat > "$PLIST_FILE" <<EOF
     <string>$PLIST_NAME</string>
     <key>ProgramArguments</key>
     <array>
-        <string>$VENV_DIR/bin/python</string>
-        <string>$PY_APP</string>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>exec $VENV_DIR/bin/python $PY_APP</string>
     </array>
     <key>EnvironmentVariables</key>
     <dict>
@@ -40,9 +41,9 @@ cat > "$PLIST_FILE" <<EOF
     <key>KeepAlive</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>$INSTALL_DIR/searxng.log</string>
+    <string>$HOME/Library/Logs/searxng.log</string>
     <key>StandardErrorPath</key>
-    <string>$INSTALL_DIR/searxng.error.log</string>
+    <string>$HOME/Library/Logs/searxng.error.log</string>
 </dict>
 </plist>
 EOF
