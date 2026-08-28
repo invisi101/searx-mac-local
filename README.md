@@ -30,6 +30,10 @@ This will:
 - Build it inside a self-contained Python virtual environment
 - Configure settings with a random secret key
 
+Re-running the installer is safe: it will not overwrite an existing
+`settings.yml`. Delete that file first if you want a clean default config
+regenerated.
+
 ---
 
 ## Usage
